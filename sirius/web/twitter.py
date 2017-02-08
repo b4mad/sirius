@@ -4,7 +4,7 @@ import os
 import datetime
 import flask
 from gevent import pool
-from flask.ext import oauth
+from flask_oauthlib.client import OAuth
 from flask.ext import login
 
 import twitter as twitter_api
@@ -14,7 +14,7 @@ from sirius.models.db import db
 
 
 blueprint = flask.Blueprint('twitter_oauth', __name__)
-oauth_app = oauth.OAuth()
+oauth_app = OAuth()
 
 # TODO move the consumer_key/secret to flask configuration. The
 # current key is a test app that redirects to 127.0.0.1:8000.

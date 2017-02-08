@@ -27,11 +27,11 @@ class TestPrinting(base.Base):
     def test_print_ok(self):
         r = self.client.post(self.get_print_url(), data=dict(
             target_printer=self.printer.id, message='hello'))
-        print r.headers
+        print(r.headers)
         self.assertRedirects(r, '/printer/1')
 
     def test_print_wrong_printer(self):
         r = self.client.post(self.get_print_url(), data=dict(
             target_printer='10', message='hello2'))
-        self.assertIn('Not a valid choice', r.data)
+        self.assertIn(b'Not a valid choice', r.data)
         self.assert200(r)

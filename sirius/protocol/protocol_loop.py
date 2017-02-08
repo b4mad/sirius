@@ -6,7 +6,6 @@ The official API is two functions:
 accept(websocket)
 send_message(device_address, message)
 """
-import messages
 import json
 import logging
 import time
@@ -15,6 +14,8 @@ import gevent
 from sirius.coding import encoders
 from sirius.coding import decoders
 from sirius import stats
+
+from sirius.protocol import messages
 
 from sirius.models import user
 from sirius.models import hardware
@@ -179,17 +180,17 @@ def _accept_step(x, bridge_state):
     :param x: A type from sirius.protocol.message
     :param bridge_state: The BridgeState for this connection
     """
-    if type(x) == messages.DeviceConnect:
+    if type(x) == DeviceConnect:
         hardware.Printer.phone_home(x.device_address)
         bridge_state.mark_alive(x.device_address)
 
-    elif type(x) == messages.DeviceDisconnect:
+    elif type(x) == DeviceDisconnect:
         bridge_state.mark_dead(x.device_address)
 
-    elif type(x) == messages.BridgeLog:
+    elif type(x) == model_messages.BridgeLog:
         pass  # TODO - write log to a place
 
-    elif type(x) == messages.EncryptionKeyRequired:
+    elif type(x) == EncryptionKeyRequired:
         hardware.Printer.phone_home(x.device_address)
         bridge_state.mark_alive(x.device_address)
 
@@ -200,7 +201,7 @@ def _accept_step(x, bridge_state):
             stats.inc('unclaimed.encryption_key_required.count')
             return
 
-        add_key = messages.AddDeviceEncryptionKey(
+        add_key = AddDeviceEncryptionKey(
             bridge_address=x.bridge_address,
             device_address=x.device_address,
             claim_code=claim_code,
@@ -208,20 +209,20 @@ def _accept_step(x, bridge_state):
 
         send_message(x.device_address, add_key)
 
-    elif type(x) == messages.DeviceHeartbeat:
+    elif type(x) == DeviceHeartbeat:
         hardware.Printer.phone_home(x.device_address)
         bridge_state.mark_alive(x.device_address)
 
-    elif type(x) == messages.PowerOn:
+    elif type(x) == PowerOn:
         logging.info('Received superfluous PowerOn message. '
                      'Probably backlog from previous socket error.')
 
-    elif type(x) == messages.DeviceDidPowerOn:
+    elif type(x) == DeviceDidPowerOn:
         # We don't really care about this one other than for debugging
         # maybe.
         bridge_state.mark_alive(x.device_address)
 
-    elif type(x) == messages.DeviceDidPrint:
+    elif type(x) == DeviceDidPrint:
         # TODO - This message is sent for two reasons:
         # 1) The user pressed the button and nothing was in the queue
         #    "hello, I don't have anything to print [...]"
@@ -229,14 +230,14 @@ def _accept_step(x, bridge_state):
         # In case 2 we want to ack the print in the database.
         pass
 
-    elif type(x) == messages.BridgeCommandResponse:
+    elif type(x) == BridgeCommandResponse:
         if x.command_id not in bridge_state.pending_commands:
             logger.error('Unexpected response (command_id not known) %r', x)
             return
 
         logger.debug('Got BridgeCommandResponse, ignoring.')
 
-    elif type(x) == messages.DeviceCommandResponse:
+    elif type(x) == DeviceCommandResponse:
         if x.command_id not in bridge_state.pending_commands:
             logger.error('Unexpected response (command_id not known) %r', x)
             return
