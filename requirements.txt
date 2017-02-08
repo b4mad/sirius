@@ -36,4 +36,3 @@ selenium==2.43.0
 six==1.10.0
 twitter==1.17.1
 websocket-client==0.40.0
-wsgiref==0.1.2
